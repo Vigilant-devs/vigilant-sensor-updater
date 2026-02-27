@@ -105,6 +105,10 @@ step "FASE 1: rsyslog — receptor de logs"
 mkdir -p "$LOG_DIR"
 chmod 750 "$LOG_DIR"
 
+# Criar arquivo de log com permissões corretas para Promtail ler desde o início
+touch "${LOG_DIR}/sensor-updates.log"
+chmod 640 "${LOG_DIR}/sensor-updates.log"
+
 cp "${SCRIPT_DIR}/rsyslog-server.conf" /etc/rsyslog.d/40-vigilant-sensors.conf
 
 # SELinux: permitir rsyslog ouvir na porta 514 TCP (padrão, mas garantir)
@@ -193,6 +197,7 @@ id promtail &>/dev/null || useradd -r -s /sbin/nologin -d /var/lib/promtail prom
 chown promtail:promtail /var/lib/promtail /etc/promtail
 chmod 750 "$LOG_DIR"
 chown root:promtail "$LOG_DIR"
+chown root:promtail "${LOG_DIR}/sensor-updates.log"
 
 if command -v chcon &>/dev/null; then
     chcon -t bin_t /usr/local/bin/promtail 2>/dev/null || true
