@@ -21,11 +21,10 @@ SERVER_HOSTNAME="vigilant-logs"
 # Timezone do servidor
 TIMEZONE="America/Sao_Paulo"
 
-# IP da VPN — range de IPs que os sensores usam dentro do túnel VPN.
-# Execute no servidor VPN principal (177.190.148.68):
-#   ip addr show | grep ppp
-# e coloque o range aqui. Exemplos comuns: 192.168.200.0/24 ou 10.10.10.0/24
-VPN_IP_RANGE="192.168.200.0/24"
+# Range de IPs dos sensores que podem enviar logs na porta 514.
+# Coloque o range da rede onde os sensores estão.
+# Deixe vazio ("") para aceitar de qualquer origem (menos seguro).
+SENSOR_IP_RANGE=""
 
 # Senha do admin do Grafana (painel web de logs)
 GRAFANA_ADMIN_PASSWORD="CHANGE_ME"
@@ -347,14 +346,18 @@ firewall-cmd --permanent --add-service=https --quiet
 firewall-cmd --permanent --add-service=http  --quiet
 ok "Porta 443/80 aberta (Grafana)"
 
-# Porta 514 TCP — SOMENTE para IPs da VPN
-firewall-cmd --permanent --new-zone=vigilant-vpn 2>/dev/null || true
-firewall-cmd --permanent --zone=vigilant-vpn --add-source="${VPN_IP_RANGE}"
-firewall-cmd --permanent --zone=vigilant-vpn --add-port=514/tcp
-ok "Porta 514/tcp aberta para range VPN: ${VPN_IP_RANGE}"
-
-# Bloquear 514 de fora (garantia)
-firewall-cmd --permanent --remove-port=514/tcp 2>/dev/null || true
+# Porta 514 TCP — para recebimento de logs dos sensores
+if [[ -n "${SENSOR_IP_RANGE}" ]]; then
+    # Restrito ao range de IPs configurado
+    firewall-cmd --permanent --new-zone=vigilant-sensors 2>/dev/null || true
+    firewall-cmd --permanent --zone=vigilant-sensors --add-source="${SENSOR_IP_RANGE}"
+    firewall-cmd --permanent --zone=vigilant-sensors --add-port=514/tcp
+    ok "Porta 514/tcp aberta para range: ${SENSOR_IP_RANGE}"
+else
+    # Aberta para qualquer origem (restringir depois com SENSOR_IP_RANGE)
+    firewall-cmd --permanent --add-port=514/tcp
+    info "Porta 514/tcp aberta para qualquer origem — defina SENSOR_IP_RANGE para restringir"
+fi
 
 firewall-cmd --reload
 ok "Firewall aplicado"
@@ -396,7 +399,7 @@ echo "  Login:    admin"
 echo "  Senha:    ${GRAFANA_ADMIN_PASSWORD}"
 echo ""
 echo "  Logs:     ${LOG_DIR}/sensor-updates.log"
-echo "  rsyslog:  TCP 514 — aguardando sensores via VPN"
+echo "  rsyslog:  TCP 514 — aguardando sensores"
 echo ""
 echo "  Proximos passos:"
 echo "  1. Nos sensores, editar /etc/rsyslog.d/50-vigilant-updater.conf"
