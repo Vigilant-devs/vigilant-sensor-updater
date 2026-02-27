@@ -18,7 +18,7 @@ REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # --- Configuration ---
 # Set your GitHub repo here or export GITHUB_REPO before running
-GITHUB_REPO="${GITHUB_REPO:-ORG/vigilant-sensor-updater}"
+GITHUB_REPO="${GITHUB_REPO:-Vigilant-devs/vigilant-sensor-updater}"
 GPG_EMAIL="updater@vigilant.com.br"
 
 VERSION="${1:-}"

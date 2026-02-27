@@ -1,6 +1,6 @@
 [Unit]
 Description=Vigilant Sensor — Remote Updater
-Documentation=https://github.com/ORG/vigilant-sensor-updater
+Documentation=https://github.com/Vigilant-devs/vigilant-sensor-updater
 After=network-online.target
 Wants=network-online.target
 

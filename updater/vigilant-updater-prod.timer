@@ -1,6 +1,6 @@
 [Unit]
 Description=Vigilant Sensor Updater — Production (weekly Sunday 3am)
-Documentation=https://github.com/ORG/vigilant-sensor-updater
+Documentation=https://github.com/Vigilant-devs/vigilant-sensor-updater
 
 [Timer]
 # Every Sunday at 03:00 local time

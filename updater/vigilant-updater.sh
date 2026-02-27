@@ -24,8 +24,8 @@ GPG_PUBKEY_FILE="${UPDATER_DIR}/vigilant.pub.gpg"
 TOKEN_FILE="${UPDATER_DIR}/.gh-token"
 
 # Manifest URL — raw GitHub (repo public) ou com token (repo private)
-# Substitua ORG pelo usuário/organização GitHub real
-MANIFEST_URL="https://raw.githubusercontent.com/ORG/vigilant-sensor-updater/main/manifest.json"
+# Organização GitHub: Vigilant-devs
+MANIFEST_URL="https://raw.githubusercontent.com/Vigilant-devs/vigilant-sensor-updater/main/manifest.json"
 
 # Status reporting endpoint
 STATUS_URL="http://177.190.148.68:80/api/sensor/update-status"
