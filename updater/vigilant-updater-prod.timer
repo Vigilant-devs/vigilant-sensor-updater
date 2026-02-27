@@ -1,5 +1,5 @@
 [Unit]
-Description=Vigilant Sensor Updater — Production (weekly Sunday 3am)
+Description=Vigilant Sensor Updater - Production (weekly Sunday 3am)
 Documentation=https://github.com/Vigilant-devs/vigilant-sensor-updater
 
 [Timer]
