@@ -3,6 +3,7 @@ Description=Vigilant Sensor Updater - Test Mode (every 5 minutes)
 Documentation=https://github.com/Vigilant-devs/vigilant-sensor-updater
 
 [Timer]
+Unit=vigilant-updater.service
 # Fire 2 minutes after boot, then every 5 minutes
 OnBootSec=2min
 OnUnitActiveSec=5min

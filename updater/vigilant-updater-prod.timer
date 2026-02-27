@@ -3,6 +3,7 @@ Description=Vigilant Sensor Updater - Production (weekly Sunday 3am)
 Documentation=https://github.com/Vigilant-devs/vigilant-sensor-updater
 
 [Timer]
+Unit=vigilant-updater.service
 # Every Sunday at 03:00 local time
 OnCalendar=Sun *-*-* 03:00:00
 # Random delay up to 5 minutes to avoid all sensors hitting GitHub simultaneously
