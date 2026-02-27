@@ -199,26 +199,40 @@ download_package() {
     while [[ $attempt -le $CURL_RETRIES ]]; do
         update_log "download_attempt" "" "" "Attempt ${attempt} — $(basename "$url")"
 
-        local curl_args=(-Lf --max-time 120 --progress-bar "$url" -o "$output")
-
         if [[ -f "$TOKEN_FILE" ]]; then
-            if curl "${curl_args[@]}" -H "Authorization: token $(cat "$TOKEN_FILE")" 2>/dev/null; then
-                return 0
+            local token
+            token=$(cat "$TOKEN_FILE")
+
+            # Private repo: resolve asset via GitHub API, then download with Accept header
+            # URL format: https://github.com/OWNER/REPO/releases/download/TAG/FILE
+            if [[ "$url" =~ github\.com/([^/]+/[^/]+)/releases/download/([^/]+)/(.+) ]]; then
+                local repo="${BASH_REMATCH[1]}"
+                local tag="${BASH_REMATCH[2]}"
+                local filename="${BASH_REMATCH[3]}"
+
+                local asset_api_url
+                asset_api_url=$(curl -sf --max-time 15 \
+                    -H "Authorization: token ${token}" \
+                    "https://api.github.com/repos/${repo}/releases/tags/${tag}" \
+                    | jq -r ".assets[] | select(.name == \"${filename}\") | .url" 2>/dev/null)
+
+                if [[ -n "$asset_api_url" ]]; then
+                    if curl -Lf --max-time 120 \
+                            -H "Authorization: token ${token}" \
+                            -H "Accept: application/octet-stream" \
+                            "$asset_api_url" -o "$output" 2>/dev/null; then
+                        return 0
+                    fi
+                fi
             fi
         else
-            if curl "${curl_args[@]}" 2>/dev/null; then
+            # Public repo: direct download
+            if curl -Lf --max-time 120 "$url" -o "$output" 2>/dev/null; then
                 return 0
             fi
         fi
 
         attempt=$((attempt + 1))
-
-        # After 2nd failure, apply fallback DNS
-        if [[ $attempt -eq 3 ]]; then
-            echo "nameserver 8.8.8.8" > /etc/resolv.conf
-            update_log "dns_fallback" "" "" "Applied fallback DNS 8.8.8.8"
-        fi
-
         sleep 5
     done
 
