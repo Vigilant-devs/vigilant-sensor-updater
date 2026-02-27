@@ -82,7 +82,7 @@ update_log() {
         "$details" >> "$LOG_FILE"
 }
 
-# HTTP POST status to central server; rsyslog fallback on failure
+# Report status: rsyslog via VPN (primary, always); HTTP endpoint (optional, when available)
 report_status() {
     local event="$1"
     local version_from="${2:-}"
@@ -90,6 +90,12 @@ report_status() {
     local rollback="${4:-false}"
     local details="${5:-}"
 
+    # --- PRIMARY: rsyslog via VPN (guaranteed delivery over existing tunnel) ---
+    logger -p local0.info -t "vigilant-updater" \
+        "event=$event sensor=$(get_sensor_id) hostname=$(hostname) v_from=$version_from v_to=$version_to rollback=$rollback details=$details"
+    update_log "report_rsyslog" "$version_from" "$version_to" "Sent via rsyslog/VPN" "$rollback"
+
+    # --- OPTIONAL: HTTP POST (future dashboard integration, silently skipped if unavailable) ---
     local payload
     payload=$(printf '{"sensor_id":"%s","hostname":"%s","event":"%s","version_from":"%s","version_to":"%s","timestamp":"%s","rollback":%s,"details":"%s"}' \
         "$(get_sensor_id)" \
@@ -106,12 +112,7 @@ report_status() {
             -H "Content-Type: application/json" \
             -d "$payload" \
             "$STATUS_URL" > /dev/null 2>&1; then
-        update_log "report_sent" "$version_from" "$version_to" "HTTP OK" "$rollback"
-    else
-        # Fallback: rsyslog via VPN
-        logger -p local0.info -t "vigilant-updater" \
-            "event=$event sensor=$(get_sensor_id) hostname=$(hostname) v_from=$version_from v_to=$version_to rollback=$rollback details=$details"
-        update_log "report_fallback_rsyslog" "$version_from" "$version_to" "HTTP failed, sent via rsyslog" "$rollback"
+        update_log "report_http_ok" "$version_from" "$version_to" "Also sent via HTTP" "$rollback"
     fi
 }
 
@@ -343,7 +344,40 @@ atomic_install() {
 }
 
 # =============================================================================
-# PHASE 5b: RESTART SERVICES
+# PHASE 5b: RUN POST-INSTALL (deploy files to system locations)
+# =============================================================================
+
+run_post_install() {
+    local release_dir="$1"
+    local version_from="$2"
+    local version_to="$3"
+
+    local post_install_script="${release_dir}/post-install.sh"
+
+    if [[ ! -f "$post_install_script" ]]; then
+        update_log "post_install_skip" "$version_from" "$version_to" \
+            "No post-install.sh in release — skipping deployment step"
+        return 0
+    fi
+
+    chmod +x "$post_install_script"
+    update_log "post_install_start" "$version_from" "$version_to" \
+        "Running post-install.sh from: ${release_dir}"
+
+    local output
+    if output=$(bash "$post_install_script" "$release_dir" "/vigilant" 2>&1); then
+        update_log "post_install_ok" "$version_from" "$version_to" \
+            "Post-install completed: ${output}"
+        return 0
+    else
+        update_log "post_install_failed" "$version_from" "$version_to" \
+            "post-install.sh failed: ${output}"
+        return 1
+    fi
+}
+
+# =============================================================================
+# PHASE 5c: RESTART SERVICES
 # =============================================================================
 
 restart_services() {
@@ -427,6 +461,11 @@ rollback() {
     local prev_ver
     prev_ver=$(basename "$prev_target")
     echo "$prev_ver" > "$VERSION_FILE"
+
+    # Re-deploy previous version's files to system locations
+    run_post_install "$prev_target" "$version_to" "$prev_ver" || \
+        update_log "rollback_post_install_failed" "$version_to" "$prev_ver" \
+            "Warning: post-install.sh failed during rollback — configs may be inconsistent" "true"
 
     # Restart services on previous version
     restart_services "$version_to" "$prev_ver" || true
@@ -527,7 +566,17 @@ main() {
         exit 1
     fi
 
-    # --- PHASE 5b: Restart services ---
+    # --- PHASE 5b: Run post-install (deploy to system locations) ---
+    if ! run_post_install "${RELEASES_DIR}/current" "$local_version" "$remote_version"; then
+        update_log "post_install_failed" "$local_version" "$remote_version" \
+            "Post-install failed — rolling back"
+        report_status "post_install_failed" "$local_version" "$remote_version" "false" \
+            "Post-install script failed"
+        rollback "$local_version" "$remote_version" "post-install.sh failed"
+        exit 1
+    fi
+
+    # --- PHASE 5c: Restart services ---
     restart_services "$local_version" "$remote_version" || true
 
     # --- PHASE 6: Health check ---

@@ -1,0 +1,51 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /var/lib/promtail/positions.yaml
+
+clients:
+  - url: http://localhost:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: vigilant-sensor-updates
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: vigilant-updater
+          __path__: /var/log/vigilant/sensor-updates.log
+
+    pipeline_stages:
+
+      # Extrai campos do formato:
+      # 2026-02-27T15:30:00+00:00 sensor-01 vigilant-updater: event=update_success sensor=sensor-01 ...
+      - regex:
+          expression: >-
+            ^(?P<log_time>\S+)\s+(?P<sensor_host>\S+)\s+vigilant-updater:\s+
+            event=(?P<event>\S+)\s+
+            sensor=(?P<sensor>[^\s]+)\s+
+            hostname=(?P<hostname>\S+)\s+
+            v_from=(?P<version_from>\S+)\s+
+            v_to=(?P<version_to>\S+)\s+
+            rollback=(?P<rollback>\S+)\s+
+            details=(?P<details>.*)$
+
+      # Promove campos extraídos como labels (para filtro no Grafana)
+      - labels:
+          event:
+          sensor:
+          hostname:
+          version_from:
+          version_to:
+          rollback:
+
+      # Usa o timestamp do log (não o de ingestão)
+      - timestamp:
+          source: log_time
+          format: RFC3339
+
+      # Remove campos internos do pipeline do output final
+      - output:
+          source: details

@@ -47,12 +47,12 @@ mkdir -p "$DIST_DIR"
 rm -rf "$STAGING_DIR"
 mkdir -p "$STAGING_DIR"
 
-echo "[1/4] Copying sensor scripts..."
+echo "[1/5] Copying sensor scripts..."
 cp -r "${REPO_ROOT}/sensor/scripts/." "${STAGING_DIR}/scripts/"
 find "${STAGING_DIR}/scripts" -name "*.sh" -exec chmod +x {} \;
 echo "[OK] scripts/ copied ($(find "${STAGING_DIR}/scripts" -name "*.sh" | wc -l | tr -d ' ') files)"
 
-echo "[2/4] Copying configs..."
+echo "[2/5] Copying configs..."
 mkdir -p "${STAGING_DIR}/configs"
 if [[ -d "${REPO_ROOT}/sensor/configs" ]] && [[ -n "$(ls -A "${REPO_ROOT}/sensor/configs" 2>/dev/null)" ]]; then
     cp -r "${REPO_ROOT}/sensor/configs/." "${STAGING_DIR}/configs/"
@@ -61,11 +61,20 @@ else
     echo "[INFO] configs/ is empty — skipping"
 fi
 
-echo "[3/4] Writing VERSION file..."
+echo "[3/4] Copying post-install.sh..."
+if [[ -f "${REPO_ROOT}/sensor/post-install.sh" ]]; then
+    cp "${REPO_ROOT}/sensor/post-install.sh" "${STAGING_DIR}/post-install.sh"
+    chmod +x "${STAGING_DIR}/post-install.sh"
+    echo "[OK] post-install.sh included"
+else
+    echo "[WARN] sensor/post-install.sh not found — package will have no deployment logic"
+fi
+
+echo "[4/4] Writing VERSION file..."
 echo "$VERSION" > "${STAGING_DIR}/VERSION"
 echo "[OK] VERSION = ${VERSION}"
 
-echo "[4/4] Creating tar.gz..."
+echo "[5/5] Creating tar.gz..."
 tar -czf "$PACKAGE_FILE" -C "$DIST_DIR" "$PACKAGE_NAME"
 rm -rf "$STAGING_DIR"
 
