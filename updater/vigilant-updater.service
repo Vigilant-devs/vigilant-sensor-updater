@@ -1,0 +1,18 @@
+[Unit]
+Description=Vigilant Sensor — Remote Updater
+Documentation=https://github.com/ORG/vigilant-sensor-updater
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/vigilant/scripts/vigilantsensor
+ExecStart=/vigilant/scripts/vigilantsensor/updater/vigilant-updater.sh
+StandardOutput=append:/vigilant/scripts/vigilantsensor/logs/vigilant-update.log
+StandardError=append:/vigilant/scripts/vigilantsensor/logs/vigilant-update.log
+
+# Security hardening
+PrivateTmp=true
+NoNewPrivileges=false
+ProtectSystem=false
