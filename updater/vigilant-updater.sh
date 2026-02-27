@@ -143,15 +143,18 @@ fetch_manifest() {
     while [[ $attempt -le $CURL_RETRIES ]]; do
         update_log "fetch_attempt" "" "" "Attempt ${attempt} — ${url}"
 
+        # Add cache-busting timestamp to bypass GitHub CDN cache
+        local bust_url="${url}?t=$(date +%s)"
+
         if [[ -n "$auth_header" ]]; then
             if curl -sf --max-time "$CURL_TIMEOUT" \
                     -H "Authorization: token $(cat "$TOKEN_FILE")" \
-                    "$url" -o "$output" 2>/dev/null; then
+                    "$bust_url" -o "$output" 2>/dev/null; then
                 return 0
             fi
         else
             if curl -sf --max-time "$CURL_TIMEOUT" \
-                    "$url" -o "$output" 2>/dev/null; then
+                    "$bust_url" -o "$output" 2>/dev/null; then
                 return 0
             fi
         fi
