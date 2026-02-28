@@ -30,4 +30,13 @@ if [[ -f "$CHECK_SRC" ]]; then
                       || echo "[custom-deploy] Hook retornou erro (ignorado)."
 fi
 
+# Auto-atualizacao do proprio script do updater
+UPDATER_SRC="${RELEASE_DIR}/updater/vigilant-updater.sh"
+UPDATER_DST="/vigilant/scripts/vigilantsensor/updater/vigilant-updater.sh"
+if [[ -f "$UPDATER_SRC" ]]; then
+    cp "$UPDATER_SRC" "$UPDATER_DST"
+    chmod +x "$UPDATER_DST"
+    echo "[custom-deploy] vigilant-updater.sh atualizado para versao do pacote."
+fi
+
 exit 0

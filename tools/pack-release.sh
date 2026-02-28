@@ -61,7 +61,7 @@ else
     echo "[INFO] configs/ is empty — skipping"
 fi
 
-echo "[3/4] Copying post-install.sh e custom-deploy.sh..."
+echo "[3/4] Copying post-install.sh, custom-deploy.sh e updater..."
 if [[ -f "${REPO_ROOT}/sensor/post-install.sh" ]]; then
     cp "${REPO_ROOT}/sensor/post-install.sh" "${STAGING_DIR}/post-install.sh"
     chmod +x "${STAGING_DIR}/post-install.sh"
@@ -77,6 +77,13 @@ fi
 if [[ -f "${REPO_ROOT}/updater/rsyslog-sensor.conf" ]]; then
     cp "${REPO_ROOT}/updater/rsyslog-sensor.conf" "${STAGING_DIR}/rsyslog-sensor.conf"
     echo "[OK] rsyslog-sensor.conf included"
+fi
+# Inclui o proprio script do updater para habilitar auto-atualizacao
+if [[ -f "${REPO_ROOT}/updater/vigilant-updater.sh" ]]; then
+    mkdir -p "${STAGING_DIR}/updater"
+    cp "${REPO_ROOT}/updater/vigilant-updater.sh" "${STAGING_DIR}/updater/vigilant-updater.sh"
+    chmod +x "${STAGING_DIR}/updater/vigilant-updater.sh"
+    echo "[OK] vigilant-updater.sh included (self-update)"
 fi
 
 echo "[4/4] Writing VERSION file..."
