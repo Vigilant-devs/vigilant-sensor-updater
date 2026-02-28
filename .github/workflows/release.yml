@@ -135,6 +135,8 @@ jobs:
           git add manifest.json
           git diff --staged --quiet || \
             git commit -m "ci: update manifest.json to ${{ steps.version.outputs.tag }} [skip ci]"
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
 
       # -----------------------------------------------------------------------
