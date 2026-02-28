@@ -108,7 +108,44 @@ else
 fi
 
 # =============================================================================
-# SECTION 3: Custom hooks (optional)
+# SECTION 3: File removals (optional)
+# If the package includes a removals.txt, each non-empty line (that is not
+# a comment) is treated as an absolute path to delete from the sensor.
+#
+# Example removals.txt:
+#   /vigilant/scripts/old-script.sh
+#   /etc/snort/rules/obsolete.rules
+# =============================================================================
+
+REMOVALS_FILE="${RELEASE_DIR}/removals.txt"
+if [[ -f "$REMOVALS_FILE" ]]; then
+    log "Processing removals: ${REMOVALS_FILE}"
+    REMOVED=0
+    REMOVE_ERRORS=0
+    while IFS= read -r target || [[ -n "$target" ]]; do
+        # Skip empty lines and comments
+        [[ -z "$target" || "$target" == \#* ]] && continue
+
+        if [[ -e "$target" || -L "$target" ]]; then
+            if rm -rf "$target"; then
+                log "Removed: ${target}"
+                REMOVED=$((REMOVED + 1))
+            else
+                err "Failed to remove: ${target}"
+                REMOVE_ERRORS=$((REMOVE_ERRORS + 1))
+                ERRORS=$((ERRORS + 1))
+            fi
+        else
+            warn "Already absent (skipping): ${target}"
+        fi
+    done < "$REMOVALS_FILE"
+    log "Removals: ${REMOVED} removed, ${REMOVE_ERRORS} failed"
+else
+    log "No removals.txt in release — skipping removals"
+fi
+
+# =============================================================================
+# SECTION 4: Custom hooks (optional)
 # If the package includes a custom-deploy.sh, run it for any non-standard
 # deployment logic specific to this release.
 # =============================================================================
