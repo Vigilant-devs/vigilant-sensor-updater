@@ -5,7 +5,7 @@
 # Uso: bash /vigilant/scripts/vigilant-healthcheck.sh
 # =============================================================================
 
-SERVICES=(snortd dionaea cowrie exabgp bettercap)
+SERVICES=(snortd dionaea exabgp bettercap)
 PASS=0
 FAIL=0
 
@@ -21,6 +21,15 @@ for svc in "${SERVICES[@]}"; do
         FAIL=$((FAIL + 1))
     fi
 done
+
+# Cowrie roda como processo do usuario cowrie (nao via systemd)
+if pgrep -u cowrie -f "cowrie" &>/dev/null; then
+    echo "  [OK]   cowrie (processo)"
+    PASS=$((PASS + 1))
+else
+    echo "  [FAIL] cowrie (processo)"
+    FAIL=$((FAIL + 1))
+fi
 
 echo ""
 echo "Resultado: ${PASS} OK / ${FAIL} falhas"
