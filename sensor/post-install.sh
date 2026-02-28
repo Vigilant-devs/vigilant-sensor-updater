@@ -100,7 +100,7 @@ CONFIGS_SRC="${RELEASE_DIR}/configs"
 if [[ -d "$CONFIGS_SRC" ]]; then
     deploy_config "snort"     "${CONFIGS_SRC}/snort"     "/etc/snort"
     deploy_config "dionaea"   "${CONFIGS_SRC}/dionaea"   "/etc/dionaea"
-    deploy_config "cowrie"    "${CONFIGS_SRC}/cowrie"    "/etc/cowrie"
+    deploy_config "cowrie"    "${CONFIGS_SRC}/cowrie"    "/home/cowrie/cowrie/etc"
     deploy_config "bettercap" "${CONFIGS_SRC}/bettercap" "/etc/bettercap"
     deploy_config "exabgp"    "${CONFIGS_SRC}/exabgp"    "/etc/exabgp"
 else
