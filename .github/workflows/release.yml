@@ -130,8 +130,8 @@ jobs:
       # -----------------------------------------------------------------------
       - name: Commit manifest.json
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "Ezequiel Senna"
+          git config user.email "ezequiel.sena@vigilant.com.br"
           git add manifest.json
           git diff --staged --quiet || \
             git commit -m "ci: update manifest.json to ${{ steps.version.outputs.tag }} [skip ci]"
