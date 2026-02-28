@@ -40,7 +40,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "count_over_time({job=\"vigilant-updater\", event=\"update_success\"}[$__range])",
+          "expr": "sum(count_over_time({job=\"vigilant-updater\", event=\"update_success\"}[$__range]))",
           "legendFormat": "Updates OK"
         }
       ],
@@ -64,7 +64,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "count_over_time({job=\"vigilant-updater\", event=\"rollback\"}[$__range])",
+          "expr": "sum(count_over_time({job=\"vigilant-updater\", event=\"rollback\"}[$__range]))",
           "legendFormat": "Rollbacks"
         }
       ],
@@ -88,7 +88,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "count_over_time({job=\"vigilant-updater\", event=\"verify_failed\"}[$__range])",
+          "expr": "sum(count_over_time({job=\"vigilant-updater\", event=\"verify_failed\"}[$__range]))",
           "legendFormat": "Verify Failed"
         }
       ],
