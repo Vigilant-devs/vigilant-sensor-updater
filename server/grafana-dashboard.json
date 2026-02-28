@@ -10,11 +10,21 @@
   "templating": {
     "list": [
       {
+        "name": "client",
+        "label": "Cliente",
+        "type": "query",
+        "datasource": { "type": "loki", "uid": "loki" },
+        "query": "label_values({job=\"vigilant-updater\"}, client)",
+        "multi": true,
+        "includeAll": true,
+        "current": { "text": "All", "value": "$__all" }
+      },
+      {
         "name": "sensor",
         "label": "Sensor",
         "type": "query",
         "datasource": { "type": "loki", "uid": "loki" },
-        "query": "label_values(sensor)",
+        "query": "label_values({job=\"vigilant-updater\", client=~\"$client\"}, sensor)",
         "multi": true,
         "includeAll": true,
         "current": { "text": "All", "value": "$__all" }
@@ -40,7 +50,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({job=\"vigilant-updater\", event=\"update_success\"}[$__range]))",
+          "expr": "sum(count_over_time({job=\"vigilant-updater\", client=~\"$client\", event=\"update_success\"}[$__range]))",
           "legendFormat": "Updates OK"
         }
       ],
@@ -64,7 +74,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({job=\"vigilant-updater\", event=\"rollback\"}[$__range]))",
+          "expr": "sum(count_over_time({job=\"vigilant-updater\", client=~\"$client\", event=\"rollback\"}[$__range]))",
           "legendFormat": "Rollbacks"
         }
       ],
@@ -88,7 +98,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({job=\"vigilant-updater\", event=\"verify_failed\"}[$__range]))",
+          "expr": "sum(count_over_time({job=\"vigilant-updater\", client=~\"$client\", event=\"verify_failed\"}[$__range]))",
           "legendFormat": "Verify Failed"
         }
       ],
@@ -112,7 +122,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "count(count by (sensor) (count_over_time({job=\"vigilant-updater\"}[24h])))",
+          "expr": "count(count by (sensor) (count_over_time({job=\"vigilant-updater\", client=~\"$client\"}[24h])))",
           "legendFormat": "Sensores"
         }
       ],
@@ -136,7 +146,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{job=\"vigilant-updater\", sensor=~\"$sensor\", event=~\"$event\"}",
+          "expr": "{job=\"vigilant-updater\", client=~\"$client\", sensor=~\"$sensor\", event=~\"$event\"}",
           "legendFormat": ""
         }
       ],
@@ -158,10 +168,42 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (sensor, event) (count_over_time({job=\"vigilant-updater\"}[$__range]))",
-          "legendFormat": "{{sensor}} — {{event}}"
+          "expr": "sum by (client, sensor, event) (count_over_time({job=\"vigilant-updater\", client=~\"$client\", sensor=~\"$sensor\"}[$__range]))",
+          "legendFormat": "{{client}} / {{sensor}} — {{event}}"
         }
       ]
+    },
+    {
+      "id": 30,
+      "title": "Sensores por Cliente",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 26, "w": 24, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (client, sensor, version_to) (count_over_time({job=\"vigilant-updater\", client=~\"$client\", event=\"update_success\"}[7d]))",
+          "legendFormat": "",
+          "instant": true
+        }
+      ],
+      "transformations": [
+        { "id": "labelsToFields", "options": { "mode": "columns" } },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "client": "Cliente",
+              "sensor": "Sensor",
+              "version_to": "Versao Atual",
+              "Value": "Updates (7d)"
+            }
+          }
+        }
+      ],
+      "options": {
+        "sortBy": [{ "displayName": "Cliente", "desc": false }],
+        "footer": { "show": false }
+      }
     },
     {
       "id": 21,
@@ -171,7 +213,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (event) (count_over_time({job=\"vigilant-updater\", event=~\"update_success|rollback|verify_failed\"}[$__interval]))",
+          "expr": "sum by (event) (count_over_time({job=\"vigilant-updater\", client=~\"$client\", sensor=~\"$sensor\", event=~\"update_success|rollback|verify_failed\"}[$__interval]))",
           "legendFormat": "{{event}}"
         }
       ],

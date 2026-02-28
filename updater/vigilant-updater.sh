@@ -39,6 +39,7 @@ CURL_RETRIES=3
 
 # Sensor identity
 SENSOR_ID_FILE="/vigilant/scripts/sensor_id"
+CLIENT_ID_FILE="/vigilant/scripts/vigilant_client_id"
 
 # =============================================================================
 # HELPERS
@@ -50,6 +51,15 @@ get_sensor_id() {
         cat "$SENSOR_ID_FILE"
     else
         hostname
+    fi
+}
+
+# Client ID: read from file or fall back to "unknown"
+get_client_id() {
+    if [[ -f "$CLIENT_ID_FILE" ]]; then
+        cat "$CLIENT_ID_FILE"
+    else
+        echo "unknown"
     fi
 }
 
@@ -71,10 +81,11 @@ update_log() {
     local rollback="${5:-false}"
 
     mkdir -p "$LOGS_DIR"
-    printf '{"timestamp":"%s","hostname":"%s","sensor_id":"%s","event":"%s","version_from":"%s","version_to":"%s","rollback":%s,"details":"%s"}\n' \
+    printf '{"timestamp":"%s","hostname":"%s","sensor_id":"%s","client_id":"%s","event":"%s","version_from":"%s","version_to":"%s","rollback":%s,"details":"%s"}\n' \
         "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
         "$(hostname)" \
         "$(get_sensor_id)" \
+        "$(get_client_id)" \
         "$event" \
         "$version_from" \
         "$version_to" \
@@ -92,13 +103,14 @@ report_status() {
 
     # --- PRIMARY: rsyslog via VPN (guaranteed delivery over existing tunnel) ---
     logger -p local0.info -t "vigilant-updater" \
-        "event=$event sensor=$(get_sensor_id) hostname=$(hostname) v_from=$version_from v_to=$version_to rollback=$rollback details=$details"
+        "event=$event sensor=$(get_sensor_id) client=$(get_client_id) hostname=$(hostname) v_from=$version_from v_to=$version_to rollback=$rollback details=$details"
     update_log "report_rsyslog" "$version_from" "$version_to" "Sent via rsyslog/VPN" "$rollback"
 
     # --- OPTIONAL: HTTP POST (future dashboard integration, silently skipped if unavailable) ---
     local payload
-    payload=$(printf '{"sensor_id":"%s","hostname":"%s","event":"%s","version_from":"%s","version_to":"%s","timestamp":"%s","rollback":%s,"details":"%s"}' \
+    payload=$(printf '{"sensor_id":"%s","client_id":"%s","hostname":"%s","event":"%s","version_from":"%s","version_to":"%s","timestamp":"%s","rollback":%s,"details":"%s"}' \
         "$(get_sensor_id)" \
+        "$(get_client_id)" \
         "$(hostname)" \
         "$event" \
         "$version_from" \

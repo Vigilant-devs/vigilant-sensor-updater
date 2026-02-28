@@ -20,14 +20,15 @@ scrape_configs:
     pipeline_stages:
 
       # Extrai campos do formato gerado pelo rsyslog:
-      # 2026-02-27T15:30:00+00:00 sensor-01 vigilant-updater[PID]: event=update_success sensor=sensor-01 ...
+      # 2026-02-27T15:30:00+00:00 sensor-01 vigilant-updater[PID]: event=update_success sensor=sensor-01 client=empresa-abc ...
       - regex:
-          expression: '^(?P<log_time>\S+)\s+(?P<sensor_host>\S+)\s+vigilant-updater(?:\[\d+\])?:\s*event=(?P<event>\S+)\s+sensor=(?P<sensor>\S+)\s+hostname=(?P<hostname>\S+)\s+v_from=(?P<version_from>\S+)\s+v_to=(?P<version_to>\S+)\s+rollback=(?P<rollback>\S+)\s+details=(?P<details>.*)$'
+          expression: '^(?P<log_time>\S+)\s+(?P<sensor_host>\S+)\s+vigilant-updater(?:\[\d+\])?:\s*event=(?P<event>\S+)\s+sensor=(?P<sensor>\S+)\s+client=(?P<client>\S+)\s+hostname=(?P<hostname>\S+)\s+v_from=(?P<version_from>\S+)\s+v_to=(?P<version_to>\S+)\s+rollback=(?P<rollback>\S+)\s+details=(?P<details>.*)$'
 
       # Promove campos extraídos como labels (para filtro no Grafana)
       - labels:
           event:
           sensor:
+          client:
           hostname:
           version_from:
           version_to:
