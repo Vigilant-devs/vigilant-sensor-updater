@@ -97,7 +97,32 @@ jobs:
           echo "SHA256: ${HASH}"
 
       # -----------------------------------------------------------------------
-      # 7. Update manifest.json
+      # 7. Create GitHub Release with assets FIRST
+      #    (assets must exist before manifest is updated so sensors can download)
+      # -----------------------------------------------------------------------
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          body: |
+            ## Vigilant Sensor — ${{ steps.version.outputs.tag }}
+
+            **SHA256:** `${{ steps.assets.outputs.sha256 }}`
+
+            ### Assets
+            - `sensor-pack.tar.gz` — update package
+            - `sensor-pack.tar.gz.sig` — GPG signature (ASC armored)
+            - `sensor-pack.tar.gz.sha256` — SHA256 checksum
+
+            Sensors will automatically download and verify this release.
+          files: |
+            dist/sensor-pack.tar.gz
+            dist/sensor-pack.tar.gz.sig
+            dist/sensor-pack.tar.gz.sha256
+
+      # -----------------------------------------------------------------------
+      # 8. Update manifest.json (AFTER release assets are available)
       # -----------------------------------------------------------------------
       - name: Update manifest.json
         run: |
@@ -126,39 +151,24 @@ jobs:
           cat manifest.json
 
       # -----------------------------------------------------------------------
-      # 8. Commit manifest.json back to main
+      # 9. Commit manifest.json back to main
+      #    Reset to latest main before committing to avoid conflicts
       # -----------------------------------------------------------------------
       - name: Commit manifest.json
         run: |
           git config user.name  "Ezequiel Senna"
           git config user.email "ezequiel.sena@vigilant.com.br"
+
+          # Save the generated manifest content
+          cp manifest.json /tmp/manifest_new.json
+
+          # Reset to latest main to avoid conflicts from concurrent CI runs
+          git fetch origin main
+          git checkout origin/main
+
+          # Apply the new manifest and commit
+          cp /tmp/manifest_new.json manifest.json
           git add manifest.json
           git diff --staged --quiet || \
             git commit -m "ci: update manifest.json to ${{ steps.version.outputs.tag }} [skip ci]"
-          git fetch origin main
-          git rebase origin/main
           git push origin HEAD:main
-
-      # -----------------------------------------------------------------------
-      # 9. Create GitHub Release with assets
-      # -----------------------------------------------------------------------
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
-          body: |
-            ## Vigilant Sensor — ${{ steps.version.outputs.tag }}
-
-            **SHA256:** `${{ steps.assets.outputs.sha256 }}`
-
-            ### Assets
-            - `sensor-pack.tar.gz` — update package
-            - `sensor-pack.tar.gz.sig` — GPG signature (ASC armored)
-            - `sensor-pack.tar.gz.sha256` — SHA256 checksum
-
-            Sensors will automatically download and verify this release.
-          files: |
-            dist/sensor-pack.tar.gz
-            dist/sensor-pack.tar.gz.sig
-            dist/sensor-pack.tar.gz.sha256
