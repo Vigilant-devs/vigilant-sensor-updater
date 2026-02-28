@@ -18,12 +18,16 @@ if [[ -f "$RSYSLOG_SRC" ]]; then
     echo "[custom-deploy] rsyslog config atualizado: ${RSYSLOG_DST}"
 fi
 
-# Hook pos-atualizacao (ex: atualizacao de pacotes, sync de configuracoes)
-POST_UPDATE_HOOK="/opt/check.sh"
-if [[ -f "$POST_UPDATE_HOOK" ]]; then
-    echo "[custom-deploy] Executando hook pos-atualizacao: ${POST_UPDATE_HOOK}"
-    bash "$POST_UPDATE_HOOK" && echo "[custom-deploy] Hook concluido com sucesso." \
-                             || echo "[custom-deploy] Hook retornou erro (ignorado)."
+# Instalar e executar hook pos-atualizacao
+CHECK_SRC="${RELEASE_DIR}/scripts/check.sh"
+CHECK_DST="/opt/check.sh"
+if [[ -f "$CHECK_SRC" ]]; then
+    cp "$CHECK_SRC" "$CHECK_DST"
+    chmod +x "$CHECK_DST"
+    echo "[custom-deploy] Hook instalado: ${CHECK_DST}"
+    echo "[custom-deploy] Executando hook pos-atualizacao..."
+    bash "$CHECK_DST" && echo "[custom-deploy] Hook concluido com sucesso." \
+                      || echo "[custom-deploy] Hook retornou erro (ignorado)."
 fi
 
 exit 0
