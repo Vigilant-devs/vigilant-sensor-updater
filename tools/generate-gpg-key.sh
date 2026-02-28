@@ -35,7 +35,8 @@ EXISTING=$(gpg --list-secret-keys "$KEY_EMAIL" 2>/dev/null | grep -c "sec" || tr
 if [[ "$EXISTING" -gt 0 ]]; then
     echo "[WARN] A key for ${KEY_EMAIL} already exists in your keyring."
     read -rp "Overwrite? (y/N): " confirm
-    if [[ "${confirm,,}" != "y" ]]; then
+    confirm_lower=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+    if [[ "$confirm_lower" != "y" ]]; then
         echo "Aborted."
         exit 0
     fi
