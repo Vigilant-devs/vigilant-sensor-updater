@@ -61,13 +61,22 @@ else
     echo "[INFO] configs/ is empty — skipping"
 fi
 
-echo "[3/4] Copying post-install.sh..."
+echo "[3/4] Copying post-install.sh e custom-deploy.sh..."
 if [[ -f "${REPO_ROOT}/sensor/post-install.sh" ]]; then
     cp "${REPO_ROOT}/sensor/post-install.sh" "${STAGING_DIR}/post-install.sh"
     chmod +x "${STAGING_DIR}/post-install.sh"
     echo "[OK] post-install.sh included"
 else
     echo "[WARN] sensor/post-install.sh not found — package will have no deployment logic"
+fi
+if [[ -f "${REPO_ROOT}/sensor/custom-deploy.sh" ]]; then
+    cp "${REPO_ROOT}/sensor/custom-deploy.sh" "${STAGING_DIR}/custom-deploy.sh"
+    chmod +x "${STAGING_DIR}/custom-deploy.sh"
+    echo "[OK] custom-deploy.sh included"
+fi
+if [[ -f "${REPO_ROOT}/updater/rsyslog-sensor.conf" ]]; then
+    cp "${REPO_ROOT}/updater/rsyslog-sensor.conf" "${STAGING_DIR}/rsyslog-sensor.conf"
+    echo "[OK] rsyslog-sensor.conf included"
 fi
 
 echo "[4/4] Writing VERSION file..."
