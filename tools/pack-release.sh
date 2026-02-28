@@ -75,7 +75,7 @@ echo "$VERSION" > "${STAGING_DIR}/VERSION"
 echo "[OK] VERSION = ${VERSION}"
 
 echo "[5/5] Creating tar.gz..."
-tar -czf "$PACKAGE_FILE" -C "$DIST_DIR" "$PACKAGE_NAME"
+tar -czf "$PACKAGE_FILE" -C "$STAGING_DIR" .
 rm -rf "$STAGING_DIR"
 
 # Generate SHA256
